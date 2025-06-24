@@ -3,20 +3,7 @@ Sankey Chart Visualization Using React and SQLite
 
 This project demonstrates how to create a Sankey chart representing data flow between multiple checkpoints. The frontend is built with React and uses Google Charts to render the Sankey diagram. The backend uses Node.js with Express and SQLite to store and serve the data via a REST API. The app fetches seeded dummy data from the backend and visualizes it as a Sankey chart.
 
-💻 Installation Method
-🔁 Prerequisites
-Node.js (v14 or later recommended)
 
-npm (comes with Node.js)
-
-Git (for cloning the repo)
-
-🧱 Clone the Project
-bash
-Copy
-Edit
-git clone https://github.com/yourusername/sankey-chart-app.git
-cd sankey-chart-app
 ⚙️ Execution Steps
 🔹 Backend Setup
 bash
