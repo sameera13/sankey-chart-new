@@ -1,9 +1,15 @@
 const sqlite3 = require("sqlite3").verbose();
+const XLSX = require("xlsx");
 const db = new sqlite3.Database("./db/database.db");
 
-db.serialize(() => {
-  db.run("DROP TABLE IF EXISTS sankey_data");
+// 1️⃣ Load the Excel file
+const workbook = XLSX.readFile("./db/sankey_data.xlsx");   // <- your file
+const sheet = workbook.Sheets[workbook.SheetNames[0]];
+const rows = XLSX.utils.sheet_to_json(sheet);              // [{source:'id1', target:'create session', value:100, color:'#FF5733'}, ...]
 
+db.serialize(() => {
+  // 2️⃣ Re-create the table
+  db.run("DROP TABLE IF EXISTS sankey_data");
   db.run(`
     CREATE TABLE sankey_data (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,28 +20,17 @@ db.serialize(() => {
     )
   `);
 
-  const dummyData = [
-    // Flow 1: id1 → create session → validate session → create order
-    ["id1", "create session", 100, "#FF5733"],
-    ["id2", "create session", 100, "#FF5733"],
-    ["create session", "validate session", 80, "#FF5733"],
-    ["validate session", "create order", 60, "#FF5733"],
-  
-    // Flow 2: create order → get products → save products
-    ["create order", "get products", 40, "#33C1FF"],
-    ["get products", "save products", 30, "#33C1FF"],
-  
-    // Flow 3: save products → submit order
-    ["save products", "submit order", 20, "#75FF33"]
-  ];
+  // 3️⃣ Bulk-insert without a manual loop using executemany-style string
+  const placeholders = rows.map(() => "(?,?,?,?)").join(",");
+  const flatValues   = rows.flatMap(r => [r.source, r.target, r.value, r.color]);
 
-  const stmt = db.prepare("INSERT INTO sankey_data (source, target, value, color) VALUES (?, ?, ?, ?)");
-  dummyData.forEach(([s, t, v, c]) => {
-    stmt.run(s, t, v, c);
-  });
-  stmt.finalize();
-
-  console.log("Seed complete.");
+  db.run(
+    `INSERT INTO sankey_data (source, target, value, color) VALUES ${placeholders}`,
+    flatValues,
+    err => {
+      if (err) console.error(err.message);
+      else     console.log("Seed complete from Excel.");
+      db.close();
+    }
+  );
 });
-
-db.close();
