@@ -9,26 +9,32 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       source TEXT,
       target TEXT,
-      value INTEGER
+      value INTEGER,
+      color TEXT
     )
   `);
 
-  const stmt = db.prepare("INSERT INTO sankey_data (source, target, value) VALUES (?, ?, ?)");
-
   const dummyData = [
-    ["Start", "Checkpoint A", 100],
-    ["Checkpoint A", "Checkpoint B", 80],
-    ["Checkpoint B", "End", 60],
-    ["Checkpoint A", "End", 20],
-    ["Start", "Checkpoint C", 40],
-    ["Checkpoint C", "End", 30]
+    // Flow 1: id1 → create session → validate session → create order
+    ["id1", "create session", 100, "#FF5733"],
+    ["id2", "create session", 100, "#FF5733"],
+    ["create session", "validate session", 80, "#FF5733"],
+    ["validate session", "create order", 60, "#FF5733"],
+  
+    // Flow 2: create order → get products → save products
+    ["create order", "get products", 40, "#33C1FF"],
+    ["get products", "save products", 30, "#33C1FF"],
+  
+    // Flow 3: save products → submit order
+    ["save products", "submit order", 20, "#75FF33"]
   ];
 
-  dummyData.forEach(([s, t, v]) => {
-    stmt.run(s, t, v);
+  const stmt = db.prepare("INSERT INTO sankey_data (source, target, value, color) VALUES (?, ?, ?, ?)");
+  dummyData.forEach(([s, t, v, c]) => {
+    stmt.run(s, t, v, c);
   });
-
   stmt.finalize();
+
   console.log("Seed complete.");
 });
 
